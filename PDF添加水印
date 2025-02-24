@@ -1,0 +1,60 @@
+pom添加
+
+        <dependency>
+            <groupId>e-iceblue</groupId>
+            <artifactId>spire.pdf.free</artifactId>
+            <version>9.13.0</version>
+        </dependency>
+
+代码实现如下
+
+@Slf4j
+public class PDFwatermarkUtils {
+    public static ByteArrayOutputStream getWaterMarkUtils(MultipartFile multipartFile,String text) {
+        try {
+            //将MultipartFile转行为输入流
+            InputStream inputStream = multipartFile.getInputStream();
+            //创建PdfDocument类的对象
+            PdfDocument pdf = new PdfDocument();
+
+            //载入PDF文件
+            pdf.loadFromStream(inputStream);
+
+            //循环遍历PDF文档中的所有页面以逐个添加水印 -- 注意 服务器如果没安装好字体库，不要修改当前字体类型，否则会报错
+            PdfTrueTypeFont font = new PdfTrueTypeFont(new Font("GB_SS_GB18030", Font.BOLD, 20));
+            for (int i = 0; i < pdf.getPages().getCount(); i++){
+                PdfPageBase pageBase = pdf.getPages().get(i);
+                insertTextWatermark(pageBase, font, text, 3, 3);
+            }
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            pdf.saveToStream(outputStream);
+            // 返回流
+            return outputStream;
+        } catch (Exception e) {
+            log.error("transfer water mark pdf fail ",e);
+        }
+        return null;
+    }
+
+    static void insertTextWatermark(PdfPageBase page, PdfTrueTypeFont font, String watermark, int row, int column) {
+
+        //计算两个偏移变量的值以用于计算坐标的平移量
+        float set1 = (float)(font.measureString(watermark).getWidth() * Math.sqrt(2)/4);
+        float set2 = (float)(font.measureString(watermark).getHeight() * Math.sqrt(2)/4);
+
+        //创建一个平铺笔刷
+        PdfTilingBrush brush = new PdfTilingBrush(new Dimension((int) (page.getActualSize().getWidth()/column), (int) (page.getActualSize().getHeight()/row)));
+        brush.getGraphics().setTransparency(0.3f);
+        brush.getGraphics().save();
+        brush.getGraphics().translateTransform(brush.getSize().getWidth()/2 - set1 - set2, brush.getSize().getHeight()/2 + set1 - set2);
+        brush.getGraphics().rotateTransform(-45);
+
+        //绘制水印文本到平铺笔刷
+        brush.getGraphics().drawString(watermark, font, PdfBrushes.getViolet(), 0, 0);
+        brush.getGraphics().restore();
+
+        //使用该平铺笔刷绘制水印
+        page.getCanvas().drawRectangle(brush, new Rectangle(new Point(0, 0), new Dimension((int)(page.getActualSize().getWidth()), (int)(page.getActualSize().getHeight()))));
+    }
+
+}
