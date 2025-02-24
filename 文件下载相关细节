@@ -1,0 +1,6 @@
+1、中文名导出格式乱码
+        realFileName = URLEncoder.encode(realFileName, "UTF-8");
+        response.reset();
+        response.setHeader("Content-disposition", "attachment;filename=" + realFileName + ";" + "filename*=utf-8''" + realFileName);
+        response.setContentType("application/octet-stream; charset=UTF-8");
+        ServletOutputStream outputStream = response.getOutputStream();
