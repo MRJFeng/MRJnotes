@@ -1,0 +1,27 @@
+Heap--oom监控
+1、配置方法
+在JAVA_OPTIONS变量中增加
+
+-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${目录}。
+例如：export JAVA_OPTS="-Xms2048M -Xmx2048M -Xmn682M -XX:MaxPermSize=96M"
+
+
+启动优化
+1、生成火焰图，观察idea启动调用
+ IDEA 自带集成的 async-profile 工具，可在 Preferences 中搜索 Java Profiler 自定义配置，启动使用 Run with xx Profiler。
+  y 轴表示调用栈，每一层都是一个函数，调用栈越深，火焰就越高，顶部就是正在执行的函数，下方都是它的父函数。
+  x 轴表示抽样数，如果一个函数在 x 轴占据的宽度越宽，就表示它被抽到的次数多，即执行的时间长。
+
+2、spring开启懒加载，但是初次访问会比较慢
+ spring:
+  main:
+    lazy-initialization: true
+
+3、启用索引，查询class时走索引
+  添加以下依赖
+  <dependency>
+  <groupId>org.springframework</groupId>
+  <artifactId>spring-context-indexer</artifactId>
+  <optional>true</optional>
+  </dependency>
+  在启动类打上@Indexed注解，这样在程序编译打包之后会生成META-INT/spring.components文件，当执行ComponentScan扫描类时，会读取索引文件，提高扫描速度
